@@ -1,0 +1,118 @@
+import sqlite3
+
+def create_tables():
+    DB_NAME = 'db/api_db'
+
+    # CONNECT TO DB
+    db = sqlite3.connect(DB_NAME)
+
+    # CURSOR DEFINITION
+    cursor = db.cursor()
+
+    # CREATE TABLES
+    cursor.executescript(
+    '''
+        CREATE TABLE IF NOT EXISTS ADMIN(
+            USERNAME TEXT PRIMARY KEY,
+            PASSWORD TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS COMPANY(
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            COMPANY_NAME TEXT,
+            COMPANY_API_KEY TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS LOCATION(
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            COMPANY_ID INTEGER,
+            LOCATION_NAME TEXT,
+            LOCATION_COUNTRY TEXT,
+            LOCATION_CITY TEXT,
+            LOCATION_META TEXT,
+            FOREIGN KEY (COMPANY_ID) 
+                REFERENCES COMPANY (ID) 
+                    ON DELETE CASCADE 
+                    ON UPDATE NO ACTION
+        );
+
+        CREATE TABLE IF NOT EXISTS SENSOR(
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            LOCATION_ID INTEGER,
+            SENSOR_NAME INTEGER,
+            SENSOR_CATEGORY TEXT,
+            SENSOR_META TEXT,
+            SENSOR_API_KEY TEXT,
+            FOREIGN KEY (LOCATION_ID) 
+                REFERENCES LOCATION (ID) 
+                    ON DELETE CASCADE 
+                    ON UPDATE NO ACTION
+        );
+    '''
+    )
+
+    # SAVE CHANGE
+    # db.commit()
+
+    # query = '''
+    #     INSERT INTO ADMIN VALUES ('diego', '123');
+    #     INSERT INTO ADMIN VALUES ('diego1', '123');
+    #     INSERT INTO ADMIN VALUES ('diego2', '123');
+    #     INSERT INTO ADMIN VALUES ('nico', '123');
+    #     INSERT INTO ADMIN VALUES ('nico1', '123');
+    #     INSERT INTO ADMIN VALUES ('nico2', '123');
+    # '''
+
+    # cursor.executescript(query)
+
+    # query = '''
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_1','AAAAA');
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_2','AAAAB');
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_3','AAAAC');
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_4','AAAAD');
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_5','AAAAE');
+    #     INSERT INTO COMPANY(COMPANY_NAME, COMPANY_API_KEY) VALUES ('COMP_6','AAAAF');
+    # '''
+
+    # cursor.executescript(query)
+
+    # query = '''
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (1, 'SUCURSAL STGO', 'CHILE', 'SANTIAGO', 'NO SE');
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (1, 'SUCURSAL STGO', 'CHILE', 'SANTIAGO', 'NO SE');
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (3, 'SUCURSAL STGO', 'CHILE', 'SANTIAGO', 'NO SE');
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (4, 'SUCURSAL BA', 'ARGENTINA', 'BUENOS AIRES', 'NO SE');
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (4, 'SUCURSAL BA', 'ARGENTINA', 'BUENOS AIRES', 'NO SE');
+    #     INSERT INTO LOCATION(COMPANY_ID, LOCATION_NAME, LOCATION_COUNTRY, LOCATION_CITY, LOCATION_META)
+    #      VALUES (6, 'SUCURSAL BA', 'ARGENTINA', 'BUENOS AIRES', 'NO SE');
+    # '''
+
+    # cursor.executescript(query)
+
+    # query = '''
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (1, 'sensor_x', 'categoria_1', 'no se', 'AAAAA');
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (1, 'sensor_Y', 'categoria_2', 'no se', 'AAAAB');
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (1, 'sensor_Z', 'categoria_3', 'no se', 'AAAAC');
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (2, 'sensor_F', 'categoria_3', 'no se', 'AAAAD');
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (1, 'sensor_G', 'categoria_2', 'no se', 'AAAAE');
+    #     INSERT INTO SENSOR(LOCATION_ID, SENSOR_NAME, SENSOR_CATEGORY, SENSOR_META, SENSOR_API_KEY)
+    #      VALUES (5, 'sensor_H', 'categoria_1', 'no se', 'AAAAF');
+    # '''
+
+    # cursor.executescript(query)
+
+    db.commit()
+
+    # cursor.execute('DROP TABLE SENSOR_DATA')
+    # db.close()
+
+# create_tables()
