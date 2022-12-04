@@ -1,9 +1,36 @@
 from flask import Flask, jsonify, request
-from db import create_table, get_all, get_one, delete, modify, admin
+from db import create_table, get_all, get_one, delete, modify, admin, sensor_data_insert, query_sensor_data
 import sqlite3
-from flask_httpauth import HTTPBasicAuth
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
+import time
 
 app = Flask(__name__)
+
+auth_company_api_key = HTTPTokenAuth()
+
+@auth_company_api_key.verify_token
+def verify_company_api_key(company_api_key):
+    if not (company_api_key):
+        return False
+    DB_NAME = 'db/api_db'
+
+    # CONNECT TO DB
+    db = sqlite3.connect(DB_NAME)
+
+    # CURSOR DEFINITION
+    cursor = db.cursor()
+
+    # USERNAME AND PASSWORD VALIDATION
+    query = "SELECT * FROM COMPANY WHERE COMPANY_API_KEY = '" + company_api_key + "'"
+
+    row = cursor.execute(query)
+
+    row = cursor.fetchone()
+
+    if row is not None:
+        return True
+    else:
+        return False
 
 # ADMIN FUNCTIONS
 
@@ -114,22 +141,31 @@ def see_tables():
     for row in rows:
         print(row)
 
-    return jsonify("OK")
+    # SENSOR DATA
+    query = "SELECT * FROM SENSOR_DATA"
+    rows = cursor.execute(query)
 
+    print("---------- SENSOR DATA ----------")
+    for row in rows:
+        print(row)
+
+    print("-------------- END --------------")
+
+    return jsonify("OK")
 
 # LOCATION
 
 @app.route('/location/get/all', methods=['GET'])
+@auth_company_api_key.login_required
 def location_get_all():
-    req = request.get_json()
-
-    company_api_key = req['company_api_key']
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
     result = get_all.location_get_all(company_api_key)
 
     data = []
     for row in result:
         data_json = {
+            'COMPANY_ID': row[6],
             'ID': row[0],
             'COMPANY_ID': row[1],
             'LOCATION_NAME': row[2],
@@ -142,16 +178,17 @@ def location_get_all():
     return jsonify(data)
 
 @app.route('/location/get/<id>', methods=['GET'])
+@auth_company_api_key.login_required
 def location_get_one(id):
-    req = request.get_json()
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
-    company_api_key = req['company_api_key']
 
     result = get_one.location_get_one(company_api_key, id)
 
     data = []
     for row in result:
         data_json = {
+            'COMPANY_ID': row[6],
             'ID': row[0],
             'COMPANY_ID': row[1],
             'LOCATION_NAME': row[2],
@@ -164,10 +201,11 @@ def location_get_one(id):
     return jsonify(data)
 
 @app.route('/location', methods=['PUT'])
+@auth_company_api_key.login_required
 def location_modify():
     req = request.get_json()
-    
-    company_api_key = req['company_api_key']
+
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['location_id']
     name = req['location_name']
     country = req['location_country']
@@ -184,11 +222,13 @@ def location_modify():
     return jsonify(response)
 
 @app.route('/location', methods=['DELETE'])
+@auth_company_api_key.login_required
 def location_delete():
     req = request.get_json()
-
-    company_api_key = req['company_api_key']
+    print(request.headers)
+    company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['location_id']
+
 
     result = delete.delete_location(company_api_key, id)
     
@@ -200,16 +240,17 @@ def location_delete():
 # SENSOR
 
 @app.route('/sensor/get/all', methods=['GET'])
+@auth_company_api_key.login_required
 def sensor_get_all():
-    req = request.get_json()
-
-    company_api_key = req['company_api_key']
+    company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
     result = get_all.sensor_get_all(company_api_key)
 
     data = []
     for row in result:
         data_json = {
+            'COMPANY_ID': row[5],
+            'LOCATION_ID': row[6],
             'ID': row[0],
             'LOCATION_ID': row[1],
             'SENSOR_NAME': row[2],
@@ -221,16 +262,17 @@ def sensor_get_all():
     return jsonify(data)
 
 @app.route('/sensor/get/<id>', methods=['GET'])
+@auth_company_api_key.login_required
 def sensorget_one(id):
-    req = request.get_json()
-
-    company_api_key = req['company_api_key']
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
     result = get_one.sensor_get_one(company_api_key, id)
 
     data = []
     for row in result:
         data_json = {
+            'COMPANY_ID': row[5],
+            'LOCATION_ID': row[6],
             'ID': row[0],
             'LOCATION_ID': row[1],
             'SENSOR_NAME': row[2],
@@ -242,10 +284,11 @@ def sensorget_one(id):
     return jsonify(data)
 
 @app.route('/sensor', methods=['PUT'])
+@auth_company_api_key.login_required
 def sensor_modify():
     req = request.get_json()
 
-    company_api_key = req['company_api_key']
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['sensor_id']
     name = req['sensor_name']
     category = req['sensor_category']
@@ -260,10 +303,11 @@ def sensor_modify():
     return jsonify(response)
 
 @app.route('/sensor', methods=['DELETE'])
+@auth_company_api_key.login_required
 def sensor_delete():
     req = request.get_json()
 
-    company_api_key = req['company_api_key']
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['sensor_id']
 
     result = delete.delete_sensor(company_api_key, id)
@@ -275,42 +319,148 @@ def sensor_delete():
 
 # SENSOR DATA
 
-# @app.route('/sensor_data/get/all', methods=['GET'])
-# def sensor_data_get_all():
-#     req = request.get_json()
+@app.route('/sensor_data/get/all', methods=['GET'])
+@auth_company_api_key.login_required
+def sensor_data_get_all():
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
-#     company_api_key = req['company_api_key']
+    result = get_all.sensor_data_get_all(company_api_key)
 
-#     result = get_all.get_all(company_api_key)
+    data = []
+    for row in result:
+        data_json = {
+            "COMPANY_ID": row[6],
+            "LOCATION_ID": row[7],
+            "SENSOR_ID": row[8],
+            "TIME": row[0],
+            "HUMIDITY": row[1],
+            "TEMPERATURE": row[2],
+            "DISTANCE": row[3],
+            "PRESSURE": row[4],
+            "LIGHT_LEVEL": row[5]
+        }
+        data.append(data_json)
 
-#     data = []
-#     for row in result:
-#         data.append(row)
+    return jsonify(data)
 
-#     return jsonify(data)
+@app.route('/sensor_data/get/<id>', methods=['GET'])
+@auth_company_api_key.login_required
+def sensor_data_get_one(id):
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
-# @app.route('/sensor_data/get/<id>', methods=['GET'])
-# def sensor_data_get_one(id):
-#     result = get_one.get_one('SENSOR_DATA', id)
+    result = get_one.get_one(company_api_key, id)
 
-#     data = []
-#     for row in result:
-#         data.append(row)
+    data = []
+    for row in result:
+        data_json = {
+            "COMPANY_ID": row[6],
+            "LOCATION_ID": row[7],
+            "SENSOR_ID": row[8],
+            "ID": row[9],
+            "TIME": row[0],
+            "HUMIDITY": row[1],
+            "TEMPERATURE": row[2],
+            "DISTANCE": row[3],
+            "PRESSURE": row[4],
+            "LIGHT_LEVEL": row[5]
+        }
+        data.append(data_json)
 
-#     return jsonify(data)
+    return jsonify(data)
 
-# # FALTA MODIFY SENSOR DATA
+@app.route('/sensor_data', methods=['PUT'])
+@auth_company_api_key.login_required
+def sensor_data_modify():
+    req = request.get_json()
 
-# @app.route('/sensor_data/<id>', methods=['DELETE'])
-# def sensor_data_delete(id):
-#     result = delete.delete('SENSOR_DATA', id)
+    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
+    id = req['id']
+    time = req['time']
+    humidity = req['humidity']
+    temperature = req['temperature']
+    distance = req['distance']
+    pressure = req['pressure']
+    light_level = req['light_level']
 
-#     response = {
-#         "result": result
-#     }
-#     return jsonify(response)
+    response = {
+        "response": modify.modify_sensor_data(company_api_key, id, time, humidity, temperature, distance, pressure, light_level)
+    }
+
+    return jsonify(response)
+
+@app.route('/sensor_data', methods=['DELETE'])
+@auth_company_api_key.login_required
+def sensor_data_delete():
+    req = request.get_json()
+
+    company_api_key = request.headers['Content/Json']
+    id = req['sensor_id']
+
+    response = {
+        "result": delete.delete_sensor_data(company_api_key, id)
+    }
+    return jsonify(response)
+
+auth_sensor_data = HTTPTokenAuth(scheme='Bearer')
+
+@auth_sensor_data.verify_token
+def verify_token(sensor_api_key):
+    if not (sensor_api_key):
+        return False
+    DB_NAME = 'db/api_db'
+
+    # CONNECT TO DB
+    db = sqlite3.connect(DB_NAME)
+
+    # CURSOR DEFINITION
+    cursor = db.cursor()
+
+    # USERNAME AND PASSWORD VALIDATION
+    query = "SELECT * FROM SENSOR WHERE SENSOR_API_KEY = '" + sensor_api_key + "'"
+
+    row = cursor.execute(query)
+
+    row = cursor.fetchone()
+
+    if row is not None:
+        return True
+    else:
+        return False
+
+@app.route('/api/v1/sensor_data', methods=['POST'])
+@auth_sensor_data.login_required
+def insertion_sensor_data():
+    req = request.get_json()
+
+    # ENVIAR COMO 'NULL' SI NO APLICA
+    sensor_api_key = request.headers['Content/Json']
+    time_epoch = time.time()
+    humidity = req['humidity']
+    temperature = req['temperature']
+    distance = req['distance']
+    pressure = req['pressure']
+    light_level = req['light_level']
+
+    response = {
+        "response": sensor_data_insert.insert_data(sensor_api_key, time_epoch, humidity, temperature, distance, pressure, light_level)
+    }
+
+    return jsonify(response)
+
+@app.route('/api/v1/sensor_data', methods=['GET'])
+@auth_company_api_key.login_required
+def query_sensor():
+    req = request.get_json()
+    
+    from_ = req['from']
+    to = req['to']
+    sensor_id = req['sensor_id']
+
+    response = query_sensor_data.query_sensor_data(from_, to, sensor_id)
+
+    return jsonify(response)
 
 
 if __name__ == '__main__':
     create_table.create_tables()
-    app.run(debug=True, port=5000)
+    app.run(port=5000)
