@@ -433,7 +433,8 @@ def insertion_sensor_data():
     req = request.get_json()
 
     # ENVIAR COMO 'NULL' SI NO APLICA
-    sensor_api_key = request.headers['Content/Json']
+    print(request.headers)
+    sensor_api_key = request.headers['Authorization'].replace("Bearer ", "")
     time_epoch = time.time()
     humidity = req['humidity']
     temperature = req['temperature']
