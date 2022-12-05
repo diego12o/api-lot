@@ -346,9 +346,9 @@ def sensor_data_get_all():
 @app.route('/sensor_data/get/<id>', methods=['GET'])
 @auth_company_api_key.login_required
 def sensor_data_get_one(id):
-    company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
+    company_api_key = request.headers['Authorization'].replace("Bearer ", "")
 
-    result = get_one.get_one(company_api_key, id)
+    result = get_one.sensor_data_get_one(company_api_key, id)
 
     data = []
     for row in result:
@@ -375,7 +375,6 @@ def sensor_data_modify():
 
     company_api_key = company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['id']
-    time = req['time']
     humidity = req['humidity']
     temperature = req['temperature']
     distance = req['distance']
@@ -383,7 +382,7 @@ def sensor_data_modify():
     light_level = req['light_level']
 
     response = {
-        "response": modify.modify_sensor_data(company_api_key, id, time, humidity, temperature, distance, pressure, light_level)
+        "response": modify.modify_sensor_data(company_api_key, id, humidity, temperature, distance, pressure, light_level)
     }
 
     return jsonify(response)
@@ -393,7 +392,7 @@ def sensor_data_modify():
 def sensor_data_delete():
     req = request.get_json()
 
-    company_api_key = request.headers['Content/Json']
+    company_api_key = request.headers['Authorization'].replace("Bearer ", "")
     id = req['sensor_id']
 
     response = {
